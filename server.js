@@ -108,24 +108,38 @@ const DEFAULT_DATA = {
   subtitle: 'KNOWLEDGE CONSTELLATION',
 };
 
+// ── 内存存储（Railway 临时文件系统友好）──────────────
+// 优先从文件读，读不到就用内置默认数据（确保 Railway 重启后仍有数据）
+let memoryData = null;
+
 function readData() {
+  if (memoryData) return memoryData;
   try {
     if (fs.existsSync(DATA_FILE)) {
-      return JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
+      memoryData = JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
+      console.log('✅ 从文件加载数据');
+      return memoryData;
     }
   } catch(e) { console.error('读取数据失败:', e.message); }
-  return JSON.parse(JSON.stringify(DEFAULT_DATA));
+  // 使用内置默认数据（深拷贝）
+  memoryData = JSON.parse(JSON.stringify(DEFAULT_DATA));
+  console.log('✅ 使用内置默认数据');
+  return memoryData;
 }
 
 function writeData(data) {
-  fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2), 'utf8');
+  memoryData = data; // 先更新内存
+  try {
+    fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2), 'utf8');
+  } catch(e) {
+    // Railway 只读文件系统时静默忽略，数据仍在内存中
+    console.log('⚠️  文件写入失败（内存数据仍有效）:', e.message);
+  }
 }
 
-// 首次初始化
-if (!fs.existsSync(DATA_FILE)) {
-  writeData(DEFAULT_DATA);
-  console.log('✅ 初始化数据文件:', DATA_FILE);
-}
+// 启动时初始化
+readData();
+console.log(`✅ 数据加载完成，共 ${memoryData.nodes.length} 个节点`);
 
 // ── 工具函数 ──────────────────────────────────────
 function parseBody(req) {
