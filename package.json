@@ -1,0 +1,12 @@
+{
+  "name": "knowledge-sphere",
+  "version": "1.0.0",
+  "description": "枕流 · 知识星图 - 可编辑的3D知识图谱",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
